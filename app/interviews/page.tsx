@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { AppLayout } from '@/components/shared/app-layout'
 import { Clock, Video, Users, Bold, Italic, Link as LinkIcon, FileText, CalendarCheck } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface Interview {
   id: string
@@ -73,18 +73,34 @@ const upcomingInterviews: Interview[] = [
 export default function InterviewsPage() {
   const [selectedInterview, setSelectedInterview] = useState(upcomingInterviews[0])
   const [overallScore, setOverallScore] = useState(4)
+  const [userRole, setUserRole] = useState<'ADMIN' | 'MANAGER' | 'COORDINATOR' | 'TALENT'>('ADMIN')
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+    const role = sessionStorage.getItem('demo_user_role') || document.cookie.match(/demo_role=(\w+)/)?.[1]
+    if (role) {
+      setUserRole(role.toUpperCase() as typeof userRole)
+    }
+  }, [])
+
+  if (!mounted) return null
+
+  const isTalent = userRole === 'TALENT'
 
   return (
     <AppLayout>
-      <div className="flex h-full bg-[#f5f5f5] dark:bg-[#2a2a2a] p-8">
-        {/* Left Sidebar - Interview List */}
-        <div className="w-[420px] flex-shrink-0 bg-white dark:bg-[#1e1e1e] rounded-lg border border-[rgba(0,0,0,0.05)] dark:border-[rgba(255,255,255,0.1)] p-6 overflow-y-auto scroller">
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-2">
-              <CalendarCheck className="size-5 text-[#6366f1]" />
-              <h2 className="text-lg font-semibold text-[#111] dark:text-[#e5e5e5]">Interviews</h2>
-            </div>
-            <p className="text-sm text-[#666] dark:text-[#aaa]">Run and score scheduled interviews</p>
+      <div className="flex flex-col h-full bg-[#f5f5f5] dark:bg-[#2a2a2a] p-8">
+        {/* Header */}
+        <div className="mb-6 flex-shrink-0">
+          <div className="flex items-center gap-2 mb-2">
+            <CalendarCheck className="size-5 text-[#6366f1]" />
+            <h2 className="text-lg font-semibold text-[#111] dark:text-[#e5e5e5]">Interviews</h2>
+          </div>
+          <p className="text-sm text-[#666] dark:text-[#aaa]">
+            {isTalent ? 'View your scheduled interviews' : 'Run and score scheduled interviews'}
+          </p>
+          {!isTalent && (
             <div className="flex flex-wrap items-center gap-2 mt-3">
               <Link href="/" className="text-xs text-[#6366f1] hover:underline">Pipeline</Link>
               <span className="text-[#999] dark:text-[#666]">·</span>
@@ -92,130 +108,187 @@ export default function InterviewsPage() {
                 <FileText className="size-3" /> Applications
               </Link>
             </div>
-            <h3 className="text-sm font-medium text-[#111] dark:text-[#e5e5e5] mt-4 mb-1">Upcoming</h3>
-            <p className="text-xs text-[#666] dark:text-[#aaa]">3 interviews scheduled for today</p>
-          </div>
-
-          <div className="space-y-4">
-            {upcomingInterviews.map((interview) => (
-              <InterviewCard
-                key={interview.id}
-                interview={interview}
-                isSelected={selectedInterview.id === interview.id}
-                onClick={() => setSelectedInterview(interview)}
-              />
-            ))}
-          </div>
+          )}
         </div>
 
-        {/* Right Panel - Interview Details */}
-        <div className="flex-1 min-w-0 pl-8 overflow-y-auto scroller">
-          <div className="max-w-4xl">
-            <div className="flex items-start justify-between mb-6">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <h1 className="text-xl font-semibold text-[#111] dark:text-[#e5e5e5]">{selectedInterview.title}</h1>
-                  <span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium px-2 py-1 rounded">
-                    LIVE
-                  </span>
-                </div>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#666] dark:text-[#aaa]">
-                  <div className="flex items-center gap-1">
-                    <Clock className="size-3" />
-                    <span>{selectedInterview.startTime} – {selectedInterview.endTime}</span>
-                    <span className="text-[#999] dark:text-[#666]">({selectedInterview.durationMinutes} min)</span>
+        <div className="flex-1 flex gap-6 min-h-0">
+          {/* Left Sidebar - Interview List */}
+          <div className="w-[420px] flex-shrink-0 bg-white dark:bg-[#1e1e1e] rounded-lg border border-[rgba(0,0,0,0.05)] dark:border-[rgba(255,255,255,0.1)] p-6 overflow-y-auto scroller">
+            <div className="mb-6">
+              <h3 className="text-sm font-medium text-[#111] dark:text-[#e5e5e5] mb-1">Upcoming</h3>
+              <p className="text-xs text-[#666] dark:text-[#aaa]">3 interviews scheduled for today</p>
+            </div>
+
+            <div className="space-y-4">
+              {upcomingInterviews.map((interview) => (
+                <InterviewCard
+                  key={interview.id}
+                  interview={interview}
+                  isSelected={selectedInterview.id === interview.id}
+                  onClick={() => setSelectedInterview(interview)}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Right Panel - Interview Details */}
+          <div className="flex-1 min-w-0 overflow-y-auto scroller">
+            <div className="bg-white dark:bg-[#1e1e1e] rounded-lg border border-[rgba(0,0,0,0.05)] dark:border-[rgba(255,255,255,0.1)] p-6">
+              <div className="max-w-4xl">
+                <div className="flex items-start justify-between mb-6">
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <h1 className="text-xl font-semibold text-[#111] dark:text-[#e5e5e5]">{selectedInterview.title}</h1>
+                      <span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium px-2 py-1 rounded">
+                        LIVE
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#666] dark:text-[#aaa]">
+                      <div className="flex items-center gap-1">
+                        <Clock className="size-3" />
+                        <span>{selectedInterview.startTime} – {selectedInterview.endTime}</span>
+                        <span className="text-[#999] dark:text-[#666]">({selectedInterview.durationMinutes} min)</span>
+                      </div>
+                      {isTalent ? (
+                        <div className="flex items-center gap-1">
+                          <Users className="size-3" />
+                          <span>Interviewer: {selectedInterview.interviewer}</span>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex items-center gap-1">
+                            <Users className="size-3" />
+                            <span>{selectedInterview.candidate} (Candidate)</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span>{selectedInterview.interviewer} (Interviewer)</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+                      <span className="font-medium text-[#111] dark:text-[#e5e5e5]">Meeting location:</span>
+                      <span className="text-[#666] dark:text-[#aaa]">{selectedInterview.meetingLocation}</span>
+                      {selectedInterview.meetingUrl && (
+                        <a
+                          href={selectedInterview.meetingUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[#6366f1] hover:underline"
+                        >
+                          Join meeting
+                        </a>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Users className="size-3" />
-                    <span>{selectedInterview.candidate} (Candidate)</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span>{selectedInterview.interviewer} (Interviewer)</span>
-                  </div>
-                </div>
-                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-                  <span className="font-medium text-[#111] dark:text-[#e5e5e5]">Meeting location:</span>
-                  <span className="text-[#666] dark:text-[#aaa]">{selectedInterview.meetingLocation}</span>
-                  {selectedInterview.meetingUrl && (
-                    <a
-                      href={selectedInterview.meetingUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[#6366f1] hover:underline"
-                    >
-                      Join meeting
-                    </a>
+
+                  {!isTalent && (
+                    <div className="flex items-center gap-2">
+                      <button className="px-4 py-2 border border-[rgba(0,0,0,0.1)] dark:border-[rgba(255,255,255,0.1)] rounded text-xs font-medium text-[#111] dark:text-[#e5e5e5] hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)] transition-colors">
+                        Resume
+                      </button>
+                      <button className="px-4 py-2 bg-[#eb3a14] text-white rounded text-xs font-medium hover:bg-[#d63512] transition-colors">
+                        Join Call
+                      </button>
+                    </div>
                   )}
                 </div>
-              </div>
 
-              <div className="flex items-center gap-2">
-                <button className="px-4 py-2 border border-[rgba(0,0,0,0.1)] dark:border-[rgba(255,255,255,0.1)] rounded text-xs font-medium text-[#111] dark:text-[#e5e5e5] hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)] transition-colors">
-                  Resume
-                </button>
-                <button className="px-4 py-2 bg-[#eb3a14] text-white rounded text-xs font-medium hover:bg-[#d63512] transition-colors">
-                  Join Call
-                </button>
-              </div>
-            </div>
+                {isTalent ? (
+                  <>
+                    {/* Talent View - Interview Info */}
+                    <div className="bg-[#f5f5f5] dark:bg-[#27272a] rounded-lg border border-[rgba(0,0,0,0.05)] dark:border-[rgba(255,255,255,0.1)] p-6 mb-6">
+                      <h2 className="text-xs font-medium text-[#666] dark:text-[#888] uppercase tracking-wide mb-4">
+                        Interview Details
+                      </h2>
+                      <div className="space-y-3">
+                        <div>
+                          <div className="text-xs text-[#666] dark:text-[#aaa] mb-1">Type</div>
+                          <div className="text-sm font-medium text-[#111] dark:text-[#e5e5e5]">{selectedInterview.type}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-[#666] dark:text-[#aaa] mb-1">Duration</div>
+                          <div className="text-sm font-medium text-[#111] dark:text-[#e5e5e5]">{selectedInterview.durationMinutes} minutes</div>
+                        </div>
+                        {selectedInterview.meetingUrl && (
+                          <div>
+                            <a
+                              href={selectedInterview.meetingUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 px-4 py-2 bg-[#6366f1] text-white rounded-md text-sm font-medium hover:bg-[#5856eb] transition-colors"
+                            >
+                              <Video className="size-4" />
+                              Join Interview
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Admin View - Agenda */}
+                    <div className="bg-[#f5f5f5] dark:bg-[#27272a] rounded-lg border border-[rgba(0,0,0,0.05)] dark:border-[rgba(255,255,255,0.1)] p-6 mb-6">
+                      <h2 className="text-xs font-medium text-[#666] dark:text-[#888] uppercase tracking-wide mb-4">
+                        Agenda
+                      </h2>
+                      <div className="space-y-3">
+                        <AgendaItem title="Introduction & Experience (5m)" isCompleted={true} />
+                        <AgendaItem title="React Component Lifecycle (10m)" isCompleted={false} />
+                        <AgendaItem title="State Management Challenge (20m)" isCompleted={false} />
+                        <AgendaItem title="Q&A (10m)" isCompleted={false} />
+                      </div>
+                    </div>
 
-            {/* Agenda */}
-            <div className="bg-white dark:bg-[#1e1e1e] rounded-lg border border-[rgba(0,0,0,0.05)] dark:border-[rgba(255,255,255,0.1)] p-6 mb-6">
-              <h2 className="text-xs font-medium text-[#666] dark:text-[#888] uppercase tracking-wide mb-4">
-                Agenda
-              </h2>
-              <div className="space-y-3">
-                <AgendaItem title="Introduction & Experience (5m)" isCompleted={true} />
-                <AgendaItem title="React Component Lifecycle (10m)" isCompleted={false} />
-                <AgendaItem title="State Management Challenge (20m)" isCompleted={false} />
-                <AgendaItem title="Q&A (10m)" isCompleted={false} />
-              </div>
-            </div>
+                    {/* Interviewer Notes */}
+                    <div className="bg-[#f5f5f5] dark:bg-[#27272a] rounded-lg border border-[rgba(0,0,0,0.05)] dark:border-[rgba(255,255,255,0.1)] p-6 mb-6">
+                      <h2 className="text-xs font-medium text-[#666] dark:text-[#888] uppercase tracking-wide mb-4">
+                        Interviewer Notes
+                      </h2>
+                      <textarea
+                        placeholder="Type your observations here... Use markdown for formatting."
+                        className="w-full min-h-[120px] p-3 bg-white dark:bg-[#1e1e1e] rounded border border-[rgba(0,0,0,0.1)] dark:border-[rgba(255,255,255,0.1)] outline-none text-sm text-[#111] dark:text-[#e5e5e5] placeholder-[#999] dark:placeholder-[#888] resize-none"
+                      />
+                      <div className="flex items-center gap-2 mt-3">
+                        <button className="p-1.5 hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)] rounded transition-colors">
+                          <Bold className="size-4 text-[#666] dark:text-[#aaa]" />
+                        </button>
+                        <button className="p-1.5 hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)] rounded transition-colors">
+                          <Italic className="size-4 text-[#666] dark:text-[#aaa]" />
+                        </button>
+                        <button className="p-1.5 hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)] rounded transition-colors">
+                          <LinkIcon className="size-4 text-[#666] dark:text-[#aaa]" />
+                        </button>
+                      </div>
+                    </div>
 
-            {/* Interviewer Notes */}
-            <div className="bg-white dark:bg-[#1e1e1e] rounded-lg border border-[rgba(0,0,0,0.05)] dark:border-[rgba(255,255,255,0.1)] p-6 mb-6">
-              <h2 className="text-xs font-medium text-[#666] dark:text-[#888] uppercase tracking-wide mb-4">
-                Interviewer Notes
-              </h2>
-              <textarea
-                placeholder="Type your observations here... Use markdown for formatting."
-                className="w-full min-h-[120px] p-3 bg-[#ececf0] dark:bg-[#27272a] rounded border-none outline-none text-sm text-[#111] dark:text-[#e5e5e5] placeholder-[#999] dark:placeholder-[#888] resize-none"
-              />
-              <div className="flex items-center gap-2 mt-3">
-                <button className="p-1.5 hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)] rounded transition-colors">
-                  <Bold className="size-4 text-[#666] dark:text-[#aaa]" />
-                </button>
-                <button className="p-1.5 hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)] rounded transition-colors">
-                  <Italic className="size-4 text-[#666] dark:text-[#aaa]" />
-                </button>
-                <button className="p-1.5 hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)] rounded transition-colors">
-                  <LinkIcon className="size-4 text-[#666] dark:text-[#aaa]" />
-                </button>
-              </div>
-            </div>
-
-            {/* Evaluation */}
-            <div className="bg-white dark:bg-[#1e1e1e] rounded-lg border border-[rgba(0,0,0,0.05)] dark:border-[rgba(255,255,255,0.1)] p-6">
-              <h2 className="text-xs font-medium text-[#666] dark:text-[#888] uppercase tracking-wide mb-4">
-                Evaluation
-              </h2>
-              <div>
-                <label className="text-sm text-[#111] dark:text-[#e5e5e5] mb-3 block">Overall Score</label>
-                <div className="flex items-center gap-2">
-                  {[1, 2, 3, 4, 5].map((score) => (
-                    <button
-                      key={score}
-                      onClick={() => setOverallScore(score)}
-                      className={`w-10 h-10 rounded text-sm font-medium transition-colors ${
-                        score === overallScore
-                          ? 'bg-[#111] dark:bg-white text-white dark:text-[#111]'
-                          : 'bg-white dark:bg-[#1e1e1e] border border-[rgba(0,0,0,0.1)] dark:border-[rgba(255,255,255,0.1)] text-[#666] dark:text-[#aaa] hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)]'
-                      }`}
-                    >
-                      {score}
-                    </button>
-                  ))}
-                </div>
+                    {/* Evaluation */}
+                    <div className="bg-[#f5f5f5] dark:bg-[#27272a] rounded-lg border border-[rgba(0,0,0,0.05)] dark:border-[rgba(255,255,255,0.1)] p-6">
+                      <h2 className="text-xs font-medium text-[#666] dark:text-[#888] uppercase tracking-wide mb-4">
+                        Evaluation
+                      </h2>
+                      <div>
+                        <label className="text-sm text-[#111] dark:text-[#e5e5e5] mb-3 block">Overall Score</label>
+                        <div className="flex items-center gap-2">
+                          {[1, 2, 3, 4, 5].map((score) => (
+                            <button
+                              key={score}
+                              onClick={() => setOverallScore(score)}
+                              className={`w-10 h-10 rounded text-sm font-medium transition-colors ${
+                                score === overallScore
+                                  ? 'bg-[#111] dark:bg-white text-white dark:text-[#111]'
+                                  : 'bg-white dark:bg-[#1e1e1e] border border-[rgba(0,0,0,0.1)] dark:border-[rgba(255,255,255,0.1)] text-[#666] dark:text-[#aaa] hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)]'
+                              }`}
+                            >
+                              {score}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { AppLayout } from '@/components/shared/app-layout'
@@ -24,7 +24,9 @@ import {
   AlertTriangle,
   CheckCircle2,
   Video,
+  Inbox,
 } from 'lucide-react'
+import { OfferLetterModal, type OfferLetterData } from '@/components/shared/offer-letter-modal'
 
 interface CandidateDetail {
   id: string
@@ -320,6 +322,13 @@ export default function ApplicationDetailPage() {
   const [showSchedule, setShowSchedule] = useState(false)
   const [showAdvance, setShowAdvance] = useState(false)
   const [showReject, setShowReject] = useState(false)
+  const [showOfferLetter, setShowOfferLetter] = useState(false)
+  const [userRole, setUserRole] = useState<'ADMIN' | 'MANAGER' | 'COORDINATOR' | 'TALENT'>('ADMIN')
+
+  useEffect(() => {
+    const role = sessionStorage.getItem('demo_user_role') || document.cookie.match(/demo_role=(\w+)/)?.[1]
+    if (role) setUserRole(role.toUpperCase() as 'ADMIN' | 'MANAGER' | 'COORDINATOR' | 'TALENT')
+  }, [])
 
   if (!candidate) {
     return (
@@ -401,7 +410,13 @@ export default function ApplicationDetailPage() {
           </div>
 
           {/* Action buttons */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            {candidate.stage === 'Offer' && userRole === 'COORDINATOR' && (
+              <Button variant="outline" size="sm" onClick={() => setShowOfferLetter(true)}>
+                <FileText className="size-3.5" />
+                View offer letter
+              </Button>
+            )}
             <Button variant="outline" size="sm" onClick={() => setShowMessage(true)}>
               <MessageSquare className="size-3.5" />
               Message
@@ -632,6 +647,21 @@ export default function ApplicationDetailPage() {
           })
         }}
       />
+
+      {showOfferLetter && candidate.stage === 'Offer' && (
+        <OfferLetterModal
+          isOpen={showOfferLetter}
+          onClose={() => setShowOfferLetter(false)}
+          offer={{
+            candidateName: candidate.name,
+            role: candidate.role,
+            salary: '$120,000',
+            startDate: 'TBD',
+            sentDate: candidate.timeline?.find((e) => e.event === 'Offer prepared')?.date ?? candidate.appliedDate,
+            expiryDate: 'Nov 1, 2024',
+          }}
+        />
+      )}
     </AppLayout>
   )
 }
@@ -652,6 +682,7 @@ function MessageModal({
   candidate: CandidateDetail | null
   onClose: () => void
 }) {
+  const router = useRouter()
   const [messages, setMessages] = useState<ChatMessage[]>([
     { id: '1', text: 'Hi! Thanks for applying. We were really impressed with your background.', sender: 'me', time: '10:30 AM' },
     { id: '2', text: "Thank you! I'm very excited about the opportunity. Looking forward to learning more about the role.", sender: 'them', time: '10:45 AM' },
@@ -736,6 +767,21 @@ function MessageModal({
           <Send className="size-3.5" />
           Send
         </Button>
+      </div>
+
+      {/* Link to Messages Inbox */}
+      <div className="mt-4 pt-4 border-t border-[rgba(0,0,0,0.05)] dark:border-[rgba(255,255,255,0.1)]">
+        <button
+          type="button"
+          onClick={() => {
+            onClose()
+            router.push('/messages')
+          }}
+          className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-medium text-[#6366f1] hover:text-[#5856eb] hover:bg-[rgba(99,102,241,0.1)] dark:hover:bg-[rgba(99,102,241,0.2)] rounded-md transition-colors"
+        >
+          <Inbox className="size-4" />
+          View all messages in inbox
+        </button>
       </div>
     </Modal>
   )

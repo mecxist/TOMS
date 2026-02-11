@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Modal } from '@/components/shared/modal'
 import { Button } from '@/components/ui/button'
-import { ExternalLink, Calendar, MessageSquare as MessageIcon, Send, Paperclip, Video, CheckCircle2, XCircle, Clock } from 'lucide-react'
+import { ExternalLink, Calendar, MessageSquare as MessageIcon, Send, Paperclip, Video, CheckCircle2, XCircle, Clock, Inbox, FileText } from 'lucide-react'
 
 /** Candidate shape used by pipeline and offers for the detail/message/schedule modals */
 export interface PipelineCandidate {
@@ -35,6 +36,7 @@ export function CandidateDetailModal({
   onMessage,
   onSchedule,
   onViewApplication,
+  onViewOfferLetter,
 }: {
   candidate: PipelineCandidate | null
   stageName: string | null
@@ -44,6 +46,8 @@ export function CandidateDetailModal({
   onMessage: (candidate: PipelineCandidate) => void
   onSchedule: (candidate: PipelineCandidate) => void
   onViewApplication: (candidate: PipelineCandidate) => void
+  /** When provided, show "View offer letter" button (e.g. on offers page or application in offer stage) */
+  onViewOfferLetter?: (candidate: PipelineCandidate) => void
 }) {
   if (!candidate) return null
 
@@ -107,7 +111,13 @@ export function CandidateDetailModal({
           <Button variant="ghost" size="sm" onClick={onClose}>
             Close
           </Button>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            {onViewOfferLetter && (
+              <Button variant="outline" size="sm" onClick={() => onViewOfferLetter(candidate)}>
+                <FileText className="size-3.5" />
+                View offer letter
+              </Button>
+            )}
             <Button variant="outline" size="sm" onClick={() => onMessage(candidate)}>
               <MessageIcon className="size-3.5" />
               Message
@@ -197,6 +207,7 @@ export function MessageModal({
   candidate: PipelineCandidate | null
   onClose: () => void
 }) {
+  const router = useRouter()
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -294,6 +305,21 @@ export function MessageModal({
           <Send className="size-3.5" />
           Send
         </Button>
+      </div>
+
+      {/* Link to Messages Inbox */}
+      <div className="mt-4 pt-4 border-t border-[rgba(0,0,0,0.05)] dark:border-[rgba(255,255,255,0.1)]">
+        <button
+          type="button"
+          onClick={() => {
+            onClose()
+            router.push('/messages')
+          }}
+          className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-medium text-[#6366f1] hover:text-[#5856eb] hover:bg-[rgba(99,102,241,0.1)] dark:hover:bg-[rgba(99,102,241,0.2)] rounded-md transition-colors"
+        >
+          <Inbox className="size-4" />
+          View all messages in inbox
+        </button>
       </div>
     </Modal>
   )

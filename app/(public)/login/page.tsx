@@ -9,7 +9,7 @@ import { Moon, Sun, ArrowLeft } from 'lucide-react'
 const demoRoles = [
   { role: 'Admin', desc: 'Full access', email: 'admin@demo.toms', color: '#7c3aed', initials: 'AD' },
   { role: 'Manager', desc: 'Manage team', email: 'manager@demo.toms', color: '#3b82f6', initials: 'MG' },
-  { role: 'Coordinator', desc: 'Coordinate tasks', email: 'coordinator@demo.toms', color: '#14b8a6', initials: 'CO' },
+  { role: 'Coordinator', displayName: 'Coordinate Talent', desc: 'HR duties', email: 'coordinator@demo.toms', color: '#14b8a6', initials: 'CO' },
   { role: 'Talent', desc: 'Talent portal', email: 'talent@demo.toms', color: '#10b981', initials: 'TL' },
 ]
 
@@ -120,7 +120,7 @@ function LoginPageContent() {
                     </div>
                     <div className="min-w-0">
                       <div className="text-sm font-medium text-[#111] dark:text-[#e5e5e5] mb-0.5">
-                        {user.role}
+                        {'displayName' in user && user.displayName ? user.displayName : user.role}
                       </div>
                       <div className="text-[10px] text-[#666] dark:text-[#aaa]">
                         {user.desc}

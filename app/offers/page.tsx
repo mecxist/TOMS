@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { AppLayout } from '@/components/shared/app-layout'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Filter, Handshake, CheckCircle2, XCircle, Clock } from 'lucide-react'
 import {
   CandidateDetailModal,
@@ -10,6 +10,7 @@ import {
   ScheduleModal,
   type PipelineCandidate,
 } from '@/components/shared/candidate-modals'
+import { OfferLetterModal, type OfferLetterData } from '@/components/shared/offer-letter-modal'
 
 interface Offer {
   id: string
@@ -42,12 +43,22 @@ function offerToPipelineCandidate(offer: Offer): PipelineCandidate {
 
 export default function OffersPage() {
   const router = useRouter()
+  const [userRole, setUserRole] = useState<'ADMIN' | 'MANAGER' | 'COORDINATOR' | 'TALENT'>('ADMIN')
+  const [mounted, setMounted] = useState(false)
   const [selectedTab, setSelectedTab] = useState<'all' | 'pending' | 'accepted' | 'rejected'>('all')
   const [selectedOffers, setSelectedOffers] = useState<Set<string>>(new Set())
   const [detailCandidate, setDetailCandidate] = useState<PipelineCandidate | null>(null)
+  const [detailOffer, setDetailOffer] = useState<Offer | null>(null)
   const [detailOfferStatus, setDetailOfferStatus] = useState<Offer['status'] | null>(null)
+  const [showOfferLetter, setShowOfferLetter] = useState(false)
   const [messagingCandidate, setMessagingCandidate] = useState<PipelineCandidate | null>(null)
   const [schedulingCandidate, setSchedulingCandidate] = useState<PipelineCandidate | null>(null)
+
+  useEffect(() => {
+    setMounted(true)
+    const role = sessionStorage.getItem('demo_user_role') || document.cookie.match(/demo_role=(\w+)/)?.[1]
+    if (role) setUserRole(role.toUpperCase() as typeof userRole)
+  }, [])
 
   const offers: Offer[] = [
     {
@@ -280,6 +291,7 @@ export default function OffersPage() {
                       type="button"
                       onClick={() => {
                         setDetailCandidate(offerToPipelineCandidate(offer))
+                        setDetailOffer(offer)
                         setDetailOfferStatus(offer.status)
                       }}
                       className="w-full text-left flex items-center gap-3 hover:opacity-90 transition-opacity cursor-pointer rounded-md -m-2 p-2"
@@ -328,6 +340,7 @@ export default function OffersPage() {
         offerStatus={detailCandidate ? detailOfferStatus : null}
         onClose={() => {
           setDetailCandidate(null)
+          setDetailOffer(null)
           setDetailOfferStatus(null)
         }}
         onMessage={(c) => {
@@ -342,7 +355,23 @@ export default function OffersPage() {
           setDetailCandidate(null)
           router.push(`/applications/${c.id}`)
         }}
+        onViewOfferLetter={userRole === 'COORDINATOR' ? () => setShowOfferLetter(true) : undefined}
       />
+
+      {showOfferLetter && detailOffer && (
+        <OfferLetterModal
+          isOpen={showOfferLetter}
+          onClose={() => setShowOfferLetter(false)}
+          offer={{
+            candidateName: detailOffer.candidate.name,
+            role: detailOffer.role,
+            salary: detailOffer.salary,
+            startDate: 'TBD',
+            sentDate: detailOffer.sentDate,
+            expiryDate: detailOffer.expiryDate,
+          }}
+        />
+      )}
 
       <MessageModal
         candidate={messagingCandidate}

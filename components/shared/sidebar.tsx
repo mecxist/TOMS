@@ -23,7 +23,9 @@ import {
   Calendar,
   Award,
   FileSearch,
-  Settings
+  Settings,
+  Inbox,
+  Mail
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 
@@ -50,16 +52,18 @@ const allNavSections: NavSection[] = [
     items: [
       { id: 'requisitions', label: 'Requisitions', href: '/requisitions', icon: <FileSearch size={18} />, roles: ['ADMIN', 'MANAGER'] },
       { id: 'pipeline', label: 'Pipeline', href: '/', icon: <Users size={18} />, badge: 12, roles: ['ADMIN', 'MANAGER', 'COORDINATOR'] },
+      { id: 'interviews', label: 'Interviews', href: '/', icon: <MessageSquare size={18} />, roles: ['TALENT'] },
       { id: 'applications', label: 'Applications', href: '/applications', icon: <FileText size={18} />, roles: ['ADMIN', 'MANAGER', 'COORDINATOR'] },
-      { id: 'interviews', label: 'Interviews', href: '/interviews', icon: <MessageSquare size={18} />, roles: ['ADMIN', 'MANAGER', 'COORDINATOR'] },
+      { id: 'interviews-admin', label: 'Interviews', href: '/interviews', icon: <MessageSquare size={18} />, roles: ['ADMIN', 'MANAGER', 'COORDINATOR'] },
       { id: 'offers', label: 'Offers', href: '/offers', icon: <Handshake size={18} />, roles: ['ADMIN', 'MANAGER', 'COORDINATOR'] },
+      { id: 'messages', label: 'Messages', href: '/messages', icon: <Inbox size={18} />, badge: 3, roles: ['ADMIN', 'MANAGER', 'COORDINATOR', 'TALENT'] },
     ],
   },
   {
     title: 'Onboarding',
     items: [
       { id: 'onboarding', label: 'Onboarding', href: '/onboarding', icon: <UserPlus size={18} />, roles: ['ADMIN', 'MANAGER', 'COORDINATOR', 'TALENT'] },
-      { id: 'skill-assessments', label: 'Skill Assessments', href: '/skill-assessments', icon: <Award size={18} />, roles: ['ADMIN', 'MANAGER', 'COORDINATOR'] },
+      { id: 'skill-assessments', label: 'Skill Assessments', href: '/skill-assessments', icon: <Award size={18} />, roles: ['ADMIN', 'MANAGER', 'COORDINATOR', 'TALENT'] },
     ],
   },
   {
