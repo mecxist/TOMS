@@ -99,9 +99,11 @@ Changelog and versioning scripts live in `scripts/` and are documented in `chang
 
 ## Deploy (Vercel)
 
-1. Push to GitHub and connect the repo in [Vercel](https://vercel.com).  
-2. Set environment variables in the Vercel project (same as `.env.local`).  
-3. Deploy; Vercel will use `npm run build` and `npm run start`.
+1. **Push to GitHub** (from this repo, with GitHub auth set up):  
+   `git push -u origin main`
+2. In [Vercel](https://vercel.com), **Import** the repo `mecxist/TOMS` and connect it.  
+3. **Environment variables:** Add the same vars as `.env.local` (e.g. `DATABASE_URL`, Clerk keys) in the Vercel project.  
+4. Deploy; Vercel will run `npm run build` and serve with Next.js.
 
 Or use the Vercel CLI:
 
