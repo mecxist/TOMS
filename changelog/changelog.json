@@ -1,0 +1,36 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "lastUpdated": "2025-01-25T00:00:00Z",
+    "totalEntries": 1
+  },
+  "entries": [
+    {
+      "id": "CHG-2025-001",
+      "version": "v0.1.0",
+      "releaseDate": "2025-01-25",
+      "status": "released",
+      "category": "feature",
+      "area": "projects",
+      "title": "Changelog Management System",
+      "summary": "Complete changelog system with UI integration, automation scripts, and roadmap linking",
+      "description": "Implemented a comprehensive changelog management system for tracking product updates and improvements.\n\n**Features Added:**\n- Changelog UI view integrated into Projects section with timeline layout\n- Filtering by category, quarter, and search functionality\n- Expandable entry cards with detailed descriptions\n- Category icons and visual indicators (feature, bugfix, improvement, security, deprecation)\n- Impact level indicators (critical, high, medium, low)\n- Roadmap integration with quarter-based grouping\n\n**Automation Tools:**\n- Git-based changelog generator (`generate-changelog.js`) that parses conventional commits\n- Interactive CLI tool (`changelog-cli.js`) for manual entry management\n- Support for conventional commit format (feat, fix, perf, security, deprecate)\n- Automatic version and date handling\n\n**Data Structure:**\n- JSON-based storage with structured entry schema\n- Support for linking to roadmap items and projects\n- Metadata tracking (author, contributors, tags, impact)\n- Status management (draft, scheduled, released, cancelled)\n\n**Documentation:**\n- Comprehensive implementation plan (CHANGELOG_PLAN.md)\n- Usage guides and best practices\n- Template files for different entry types\n- Script documentation with examples\n\nThis system provides transparency for product updates and enables better communication with stakeholders about changes and improvements.",
+      "roadmapQuarter": "Q1 2025",
+      "roadmapItemId": "",
+      "relatedProjects": [],
+      "author": "Mec Zilla",
+      "contributors": [],
+      "tags": ["changelog", "documentation", "automation", "ui", "roadmap"],
+      "impact": "medium",
+      "affectedUsers": "all",
+      "breakingChanges": false,
+      "migrationRequired": false,
+      "documentationUrl": "",
+      "releaseNotesUrl": "",
+      "apiChanges": null,
+      "createdAt": "2025-01-25T00:00:00Z",
+      "updatedAt": "2025-01-25T00:00:00Z",
+      "publishedAt": "2025-01-25T00:00:00Z"
+    }
+  ]
+}

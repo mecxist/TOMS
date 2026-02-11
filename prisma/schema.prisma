@@ -1,0 +1,627 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  COORDINATOR
+  TALENT
+}
+
+enum ApplicationStatus {
+  APPLIED
+  REVIEWING
+  INTERVIEWING
+  OFFER_SENT
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum OnboardingTaskType {
+  CONTRACT
+  W9_OR_W4
+  SKILL_ASSESSMENT
+  TOOL_TRAINING
+  BACKGROUND_CHECK
+  VIDEO_TRAINING
+  DOCUMENT_UPLOAD
+}
+
+enum OnboardingTaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  SKIPPED
+}
+
+enum TimeEntryStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+enum TimesheetStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+  PAID
+}
+
+enum PayrollRunStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  EXPORTED
+  PROCESSED
+}
+
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum AssignmentStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum TalentModel {
+  EMPLOYMENT
+  CONTINGENT_WORKFORCE
+  VOLUNTEER
+  HYBRID
+}
+
+enum IntegrationType {
+  PROJECT_MANAGEMENT
+  TIME_TRACKING
+  PAYROLL
+  CALENDAR
+  COMMUNICATION
+}
+
+enum IntegrationStatus {
+  PENDING
+  CONNECTED
+  ERROR
+  DISCONNECTED
+}
+
+enum ImportType {
+  PROJECTS
+  TASKS
+  USERS
+  TIME_ENTRIES
+}
+
+enum ImportStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+// Organization Management
+model Organization {
+  id                    String   @id @default(cuid())
+  name                  String
+  slug                  String   @unique
+  domain                String?  @unique
+  
+  // Quickstart completion tracking
+  quickstartCompleted   Boolean  @default(false)
+  quickstartStep        Int      @default(0)
+  
+  // Talent Model Configuration
+  talentModel           TalentModel @default(EMPLOYMENT)
+  
+  // Feature Toggles
+  features              Json     // { payroll: boolean, projectManagement: boolean, ... }
+  
+  // Terminology Customization
+  terminology           Json     // { offer: "Invitation", hired: "Accepted", ... }
+  
+  // Integration Configuration
+  integrations          Json     // { projectManagement: { provider: "asana", enabled: true, ... } }
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  users                 User[]
+  projects              Project[]
+  integrationConnections Integration[]
+  importJobs            ImportJob[]
+  invitations           Invitation[]
+
+  @@index([slug])
+  @@index([domain])
+}
+
+// User Management
+model User {
+  id                String               @id @default(cuid())
+  email             String               @unique
+  emailVerified     Boolean              @default(false)
+  name              String?
+  image             String?
+  role              UserRole             @default(TALENT)
+  organizationId    String?
+  organization      Organization?         @relation(fields: [organizationId], references: [id])
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  profile           Profile?
+  sessions          Session[]
+  accounts          Account[]
+  interviews        Interview[]
+  onboardingTasks   OnboardingTask[]     @relation("AssessorTasks")
+  managedProjects   Project[]
+  timesheets        Timesheet[]
+  timeEntries       TimeEntry[]
+  assignments       Assignment[]
+  availabilitySlots AvailabilitySlot[]
+  skillAssessments  SkillAssessment[]
+  matchScores       MatchScore[]
+  auditLogs         AuditLog[]
+  approvedTimesheets Timesheet[]         @relation("ApprovedTimesheets")
+  comments          Comment[]
+  sentInvitations   Invitation[]         @relation("Inviter")
+  invitations       Invitation[]         @relation("Invitee")
+
+  @@index([email])
+  @@index([role])
+  @@index([organizationId])
+}
+
+model Profile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName String
+  lastName  String
+  phone     String?
+  timezone  String   @default("UTC")
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Talent Lifecycle
+model Candidate {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  firstName    String
+  lastName     String
+  phone        String?
+  resumeUrl    String?
+  skills       String[]
+  status       ApplicationStatus @default(APPLIED)
+  source       String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  applications Application[]
+
+  @@index([email])
+  @@index([status])
+}
+
+model Application {
+  id          String            @id @default(cuid())
+  candidateId String
+  candidate   Candidate         @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  roleId      String?
+  status      ApplicationStatus @default(APPLIED)
+  source      String?
+  submittedAt DateTime          @default(now())
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  interviews  Interview[]
+  comments    Comment[]
+
+  @@index([candidateId])
+  @@index([status])
+  @@index([submittedAt])
+}
+
+model Interview {
+  id            String      @id @default(cuid())
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  scheduledAt   DateTime
+  interviewerId String
+  interviewer   User        @relation(fields: [interviewerId], references: [id])
+  type          String      // "TECHNICAL", "CULTURE_FIT", "MANAGER"
+  meetingUrl    String?
+  notes         String?     @db.Text
+  feedback      String?     @db.Text
+  technicalScore Int?
+  communicationScore Int?
+  cultureFitScore Int?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([applicationId])
+  @@index([interviewerId])
+  @@index([scheduledAt])
+}
+
+model OnboardingTask {
+  id              String               @id @default(cuid())
+  talentId        String
+  talent          User                 @relation("AssessorTasks", fields: [talentId], references: [id], onDelete: Cascade)
+  taskType        OnboardingTaskType
+  status          OnboardingTaskStatus @default(PENDING)
+  completedAt     DateTime?
+  assessmentScore Int?
+  documentUrl     String?
+  notes           String?              @db.Text
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  @@index([talentId])
+  @@index([status])
+}
+
+// Project & Assignment
+model Project {
+  id              String        @id @default(cuid())
+  name            String
+  description     String?       @db.Text
+  status          ProjectStatus @default(PLANNING)
+  startDate       DateTime?
+  endDate         DateTime?
+  managerId       String
+  manager         User          @relation(fields: [managerId], references: [id])
+  organizationId  String?
+  organization    Organization?  @relation(fields: [organizationId], references: [id])
+  
+  // External integration fields
+  externalId      String?
+  externalProvider String?      // "asana", "jira", "monday", etc.
+  externalUrl     String?
+  importedAt      DateTime?
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  requisitions    Requisition[]
+  assignments     Assignment[]
+
+  @@index([managerId])
+  @@index([status])
+  @@index([organizationId])
+  @@index([externalId, externalProvider])
+}
+
+model Requisition {
+  id               String       @id @default(cuid())
+  projectId        String
+  project          Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  roleId           String?
+  requiredSkills   String[]
+  niceToHaveSkills String[]
+  hoursPerWeek     Int
+  startDate        DateTime
+  endDate          DateTime?
+  status           String       @default("OPEN") // "OPEN", "FILLED", "CANCELLED"
+  description      String?      @db.Text
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  matchScores      MatchScore[]
+
+  @@index([projectId])
+  @@index([status])
+}
+
+model Assignment {
+  id           String           @id @default(cuid())
+  talentId     String
+  talent       User             @relation(fields: [talentId], references: [id], onDelete: Cascade)
+  projectId    String
+  project      Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  startDate    DateTime
+  endDate      DateTime?
+  hourlyRate   Float
+  hoursPerWeek Int
+  status       AssignmentStatus @default(PENDING)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  timeEntries  TimeEntry[]
+
+  @@index([talentId])
+  @@index([projectId])
+  @@index([status])
+}
+
+model AvailabilitySlot {
+  id           String   @id @default(cuid())
+  talentId     String
+  talent       User     @relation(fields: [talentId], references: [id], onDelete: Cascade)
+  dayOfWeek    Int      // 0-6 (Sunday-Saturday)
+  startTime    String   // "09:00"
+  endTime      String   // "17:00"
+  hoursPerWeek Int
+  effectiveFrom DateTime @default(now())
+  effectiveTo   DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([talentId])
+  @@index([effectiveFrom])
+}
+
+// Time & Payroll
+model TimeEntry {
+  id           String          @id @default(cuid())
+  talentId     String
+  talent       User            @relation(fields: [talentId], references: [id], onDelete: Cascade)
+  assignmentId String
+  assignment   Assignment      @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  date         DateTime
+  hours        Float
+  description  String?         @db.Text
+  status       TimeEntryStatus @default(DRAFT)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  timesheetId  String?
+  timesheet    Timesheet?      @relation(fields: [timesheetId], references: [id])
+
+  @@index([talentId, date])
+  @@index([assignmentId])
+  @@index([status])
+  @@index([timesheetId])
+}
+
+model Timesheet {
+  id            String          @id @default(cuid())
+  talentId      String
+  talent        User            @relation(fields: [talentId], references: [id], onDelete: Cascade)
+  weekStartDate DateTime
+  weekEndDate   DateTime
+  totalHours    Float
+  status        TimesheetStatus @default(DRAFT)
+  approvedBy    String?
+  approver      User?           @relation("ApprovedTimesheets", fields: [approvedBy], references: [id])
+  approvedAt    DateTime?
+  rejectionNote String?         @db.Text
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  timeEntries   TimeEntry[]
+
+  @@index([talentId])
+  @@index([weekStartDate])
+  @@index([status])
+}
+
+model PayrollRun {
+  id               String            @id @default(cuid())
+  periodStart      DateTime
+  periodEnd        DateTime
+  totalAmount      Float
+  status           PayrollRunStatus  @default(DRAFT)
+  gustoExportedAt  DateTime?
+  gustoPayrollId   String?
+  entries          Json              // Array of { talentId, hours, rate, amount }
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  processedBy      String?
+  processedAt      DateTime?
+
+  @@index([periodStart])
+  @@index([status])
+}
+
+// AI Matching
+model MatchScore {
+  id                String      @id @default(cuid())
+  talentId          String
+  talent            User        @relation(fields: [talentId], references: [id], onDelete: Cascade)
+  requisitionId     String
+  requisition       Requisition @relation(fields: [requisitionId], references: [id], onDelete: Cascade)
+  score             Float       // 0-100
+  reasoning         String?     @db.Text
+  skillsMatch       Json        // { required: [], matched: [] }
+  availabilityMatch Boolean
+  assessmentAvg     Float?
+  createdAt         DateTime    @default(now())
+
+  @@index([requisitionId, score])
+  @@index([talentId])
+}
+
+model SkillAssessment {
+  id         String   @id @default(cuid())
+  talentId   String
+  talent     User     @relation(fields: [talentId], references: [id], onDelete: Cascade)
+  skill      String
+  score      Int      // 0-100
+  assessedAt DateTime @default(now())
+  assessorId String?
+  notes      String?  @db.Text
+
+  @@index([talentId])
+  @@index([skill])
+}
+
+// Audit & Compliance
+model AuditLog {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action       String   // "CREATE", "UPDATE", "DELETE", "VIEW"
+  resourceType String   // "Application", "Timesheet", "PayrollRun"
+  resourceId   String
+  changes      Json?    // Before/after for updates
+  ipAddress    String?
+  userAgent    String?
+  timestamp    DateTime @default(now())
+
+  @@index([userId])
+  @@index([resourceType, resourceId])
+  @@index([timestamp])
+}
+
+// Collaborative Features
+model Comment {
+  id            String      @id @default(cuid())
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content       String      @db.Text
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([applicationId])
+  @@index([userId])
+}
+
+// Integration Management
+model Integration {
+  id                    String            @id @default(cuid())
+  organizationId        String
+  organization          Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  provider              String            // "asana", "jira", "monday", "linear", "github", etc.
+  type                  IntegrationType
+  status                IntegrationStatus @default(PENDING)
+  
+  // OAuth/API credentials (encrypted)
+  credentials           Json              // Encrypted API keys, tokens, etc.
+  
+  // Configuration
+  config                Json              // Provider-specific settings
+  
+  // Sync settings
+  syncEnabled           Boolean           @default(true)
+  lastSyncAt            DateTime?
+  syncFrequency         String            @default("hourly") // "realtime", "hourly", "daily"
+  
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  
+  @@index([organizationId])
+  @@index([provider, type])
+}
+
+// Import Job Management
+model ImportJob {
+  id                    String      @id @default(cuid())
+  organizationId        String
+  organization          Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  type                  ImportType
+  provider              String      // External system provider
+  status                ImportStatus @default(PENDING)
+  
+  // Import configuration
+  config                Json        // What to import, filters, mappings
+  
+  // Results
+  totalItems            Int?
+  importedItems         Int         @default(0)
+  failedItems           Int         @default(0)
+  errors                Json?       // Array of error messages
+  
+  startedAt             DateTime?
+  completedAt           DateTime?
+  createdAt             DateTime    @default(now())
+  
+  @@index([organizationId])
+  @@index([status])
+}
+
+// Better Auth Session Management
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt    DateTime
+  token        String   @unique
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+}
+
+model Account {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId         String
+  providerId        String
+  accessToken       String?
+  refreshToken      String?
+  expiresAt         DateTime?
+  scope             String?
+  idToken           String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([identifier, value])
+  @@index([expiresAt])
+}
+
+// User Invitations
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  CANCELLED
+}
+
+model Invitation {
+  id            String           @id @default(cuid())
+  email         String
+  organizationId String
+  organization  Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  role          UserRole         @default(TALENT)
+  invitedById   String
+  inviter       User             @relation("Inviter", fields: [invitedById], references: [id])
+  inviteeId     String?
+  invitee       User?            @relation("Invitee", fields: [inviteeId], references: [id])
+  token         String           @unique
+  status        InvitationStatus @default(PENDING)
+  expiresAt     DateTime
+  acceptedAt    DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([email])
+  @@index([organizationId])
+  @@index([token])
+  @@index([status])
+  @@index([expiresAt])
+}
