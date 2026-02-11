@@ -60,6 +60,7 @@ export async function createOrganization(config: OrganizationConfig) {
       terminology: config.terminology,
       quickstartCompleted: false,
       quickstartStep: 0,
+      integrations: {},
     },
   })
 }

@@ -4,8 +4,8 @@ import { prisma } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
-    const { user } = await requireAuth()
-    
+    const user = await requireAuth()
+
     const dbUser = await prisma.user.findUnique({
       where: { id: user.id },
       select: { role: true },

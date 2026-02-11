@@ -5,7 +5,9 @@ import { VerificationEmail } from './templates/verification-email'
 import { PasswordResetEmail } from './templates/password-reset-email'
 import { WelcomeEmail } from './templates/welcome-email'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY)
+}
 
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'noreply@talentos.com'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
@@ -43,7 +45,7 @@ export async function sendInvitationEmail(data: InvitationEmailData) {
   const acceptUrl = `${APP_URL}/accept-invitation/${data.token}`
 
   try {
-    const { error } = await resend.emails.send({
+    const { error } = await getResend().emails.send({
       from: FROM_EMAIL,
       to: data.email,
       subject: `You've been invited to join ${data.organizationName}`,
@@ -72,7 +74,7 @@ export async function sendVerificationEmail(data: VerificationEmailData) {
   const verifyUrl = `${APP_URL}/verify-email?token=${data.token}`
 
   try {
-    const { error } = await resend.emails.send({
+    const { error } = await getResend().emails.send({
       from: FROM_EMAIL,
       to: data.email,
       subject: 'Verify your email address',
@@ -99,7 +101,7 @@ export async function sendPasswordResetEmail(data: PasswordResetEmailData) {
   const resetUrl = `${APP_URL}/reset-password?token=${data.token}`
 
   try {
-    const { error } = await resend.emails.send({
+    const { error } = await getResend().emails.send({
       from: FROM_EMAIL,
       to: data.email,
       subject: 'Reset your password',
@@ -124,7 +126,7 @@ export async function sendPasswordResetEmail(data: PasswordResetEmailData) {
  */
 export async function sendWelcomeEmail(data: WelcomeEmailData) {
   try {
-    const { error } = await resend.emails.send({
+    const { error } = await getResend().emails.send({
       from: FROM_EMAIL,
       to: data.email,
       subject: `Welcome to ${data.organizationName || 'TalentOS'}!`,

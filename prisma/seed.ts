@@ -5,13 +5,14 @@ const prisma = new PrismaClient()
 async function main() {
   console.log('Seeding database...')
 
-  // Create admin user (replace with actual Clerk user ID after signup)
+  // Create admin user
   const adminUser = await prisma.user.upsert({
     where: { email: 'admin@talentos.com' },
     update: {},
     create: {
-      clerkId: 'user_admin_placeholder',
       email: 'admin@talentos.com',
+      name: 'Admin User',
+      emailVerified: true,
       role: UserRole.ADMIN,
       profile: {
         create: {
@@ -28,8 +29,9 @@ async function main() {
     where: { email: 'coordinator@talentos.com' },
     update: {},
     create: {
-      clerkId: 'user_coordinator_placeholder',
       email: 'coordinator@talentos.com',
+      name: 'Coordinator User',
+      emailVerified: true,
       role: UserRole.COORDINATOR,
       profile: {
         create: {

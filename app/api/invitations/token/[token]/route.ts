@@ -3,10 +3,11 @@ import { getInvitationByToken } from '@/lib/invitations'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { token: string } }
+  { params }: { params: Promise<{ token: string }> }
 ) {
   try {
-    const invitation = await getInvitationByToken(params.token)
+    const { token } = await params
+    const invitation = await getInvitationByToken(token)
 
     if (!invitation) {
       return NextResponse.json(

@@ -106,7 +106,7 @@ export async function parseTalentCSV(file: File): Promise<ImportResult> {
 
           resolve({ valid, errors })
         },
-        error: (error) => {
+        error: (error: Error) => {
           resolve({
             valid: [],
             errors: [{ row: 0, email: '', error: error.message || 'Failed to parse CSV' }],

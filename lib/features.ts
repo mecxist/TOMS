@@ -44,6 +44,7 @@ export const DEFAULT_FEATURES: Record<TalentModel, Record<string, boolean>> = {
 }
 
 export interface FeatureFlags {
+  [key: string]: boolean
   payroll: boolean
   projectManagement: boolean
   externalProjectIntegration: boolean

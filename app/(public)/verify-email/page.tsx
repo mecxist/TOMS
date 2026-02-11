@@ -30,7 +30,7 @@ function VerifyEmailContent() {
     setLoading(true)
     try {
       const result = await authClient.verifyEmail({
-        token,
+        query: { token },
       })
 
       if (result.error) {

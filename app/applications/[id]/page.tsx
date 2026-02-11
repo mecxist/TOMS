@@ -976,7 +976,7 @@ function AdvanceStageModal({
           <select
             className={inputClass}
             value={effectiveTarget}
-            onChange={(e) => setTargetStage(e.target.value)}
+            onChange={(e) => setTargetStage(e.target.value as typeof STAGES[number])}
           >
             {availableStages.map((stage) => (
               <option key={stage} value={stage}>{stage}</option>

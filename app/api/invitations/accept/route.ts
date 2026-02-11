@@ -9,7 +9,7 @@ const acceptInvitationSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const { user } = await requireAuth()
+    const user = await requireAuth()
     const body = await request.json()
     const validated = acceptInvitationSchema.parse(body)
 
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     console.error('Error accepting invitation:', error)
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid input', details: error.errors },
+        { error: 'Invalid input', details: error.issues },
         { status: 400 }
       )
     }

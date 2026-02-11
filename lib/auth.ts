@@ -14,31 +14,30 @@ export const auth = betterAuth({
   },
   socialProviders: {
     google: {
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     },
     github: {
-      clientId: process.env.GITHUB_CLIENT_ID,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET,
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
     },
   },
   plugins: [
     {
       id: 'two-factor',
-      name: 'two-factor',
-    },
+    } as any,
   ],
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
     updateAge: 60 * 60 * 24, // 1 day
   },
   email: {
-    sendVerificationEmail: async ({ user, url }) => {
+    sendVerificationEmail: async ({ user, url }: { user: { email: string }; url: string }) => {
       // Email sending will be handled by our email service
       // This is a placeholder - actual implementation in lib/emails/sender.ts
       console.log('Verification email:', { email: user.email, url })
     },
-    sendPasswordResetEmail: async ({ user, url }) => {
+    sendPasswordResetEmail: async ({ user, url }: { user: { email: string }; url: string }) => {
       console.log('Password reset email:', { email: user.email, url })
     },
   },
@@ -98,5 +97,5 @@ export function hasPermission(userRole: UserRole, requiredRoles: UserRole[]): bo
   return requiredRoles.includes(userRole)
 }
 
-// Client-side auth helper
-export const authClient = auth.$client
+// Client-side auth helper - re-exported from lib/auth-client.ts
+export { authClient } from './auth-client'

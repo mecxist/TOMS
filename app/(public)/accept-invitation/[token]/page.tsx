@@ -70,7 +70,7 @@ function AcceptInvitationContent() {
 
   const checkAuth = async () => {
     try {
-      const session = await authClient.getSession()
+      const { data: session } = await authClient.getSession()
       setIsSignedIn(!!session?.user)
       if (session?.user) {
         setSignUpData({

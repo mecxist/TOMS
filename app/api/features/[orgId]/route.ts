@@ -4,11 +4,12 @@ import { requireAuth } from '@/lib/auth'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { orgId: string } }
+  { params }: { params: Promise<{ orgId: string }> }
 ) {
   try {
     await requireAuth()
-    const features = await getFeatures(params.orgId)
+    const { orgId } = await params
+    const features = await getFeatures(orgId)
     return NextResponse.json(features)
   } catch (error) {
     console.error('Error fetching features:', error)
@@ -21,12 +22,13 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { orgId: string } }
+  { params }: { params: Promise<{ orgId: string }> }
 ) {
   try {
     await requireAuth()
+    const { orgId } = await params
     const body = await request.json()
-    const features = await updateFeatures(params.orgId, body)
+    const features = await updateFeatures(orgId, body)
     return NextResponse.json(features)
   } catch (error) {
     console.error('Error updating features:', error)

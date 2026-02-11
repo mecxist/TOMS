@@ -4,11 +4,12 @@ import { requireAuth } from '@/lib/auth'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await requireAuth()
-    const org = await getOrganization(params.id)
+    const { id } = await params
+    const org = await getOrganization(id)
 
     if (!org) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })

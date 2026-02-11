@@ -118,7 +118,7 @@ export function Sidebar() {
     // Production mode: use better-auth
     try {
       const { authClient } = await import('@/lib/auth')
-      const session = await authClient.getSession()
+      const { data: session } = await authClient.getSession()
       if (session?.user) {
         setUserEmail(session.user.email || '')
         setUserName(session.user.name || session.user.email || 'User')

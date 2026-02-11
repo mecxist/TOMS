@@ -5,13 +5,14 @@ import { cancelInvitation } from '@/lib/invitations'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await requireRole(['ADMIN', 'MANAGER', 'COORDINATOR'])
-    
+    const { id } = await params
+
     const invitation = await prisma.invitation.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         organization: {
           select: {
@@ -53,12 +54,13 @@ export async function GET(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await requireRole(['ADMIN', 'MANAGER', 'COORDINATOR'])
-    
-    await cancelInvitation(params.id)
+    const { id } = await params
+
+    await cancelInvitation(id)
 
     return NextResponse.json({ success: true })
   } catch (error: any) {

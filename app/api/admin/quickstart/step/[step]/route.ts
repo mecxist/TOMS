@@ -4,10 +4,11 @@ import { requireAuth } from '@/lib/auth'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { step: string } }
+  { params }: { params: Promise<{ step: string }> }
 ) {
   try {
     await requireAuth()
+    const { step: stepParam } = await params
     const body = await request.json()
     const { orgId, data } = body
 
@@ -18,7 +19,7 @@ export async function POST(
       )
     }
 
-    const step = parseInt(params.step)
+    const step = parseInt(stepParam)
     if (isNaN(step) || step < 0 || step > 6) {
       return NextResponse.json(
         { error: 'Invalid step number' },
